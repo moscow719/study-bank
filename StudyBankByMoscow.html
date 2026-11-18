@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StudyBank</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#FFF8E6;font-family:"Segoe UI",Tahoma,Arial,sans-serif;color:#0B1F3A;min-height:100vh;display:flex;justify-content:center;padding:24px 12px}
+.card{background:#fff;width:100%;max-width:820px;border-radius:24px;box-shadow:0 10px 40px rgba(11,31,58,.08);padding:26px 32px;min-height:620px;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:800;color:#1677FF;font-size:20px;letter-spacing:.5px}
+.prev{background:none;border:none;color:#7d8394;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;font-family:inherit}
+.prev:disabled{opacity:.3;cursor:default}
+.bar{height:6px;background:#eee;border-radius:6px;margin-top:18px;overflow:hidden}
+.bar>div{height:100%;background:#F5B800;transition:width .3s}
+.meta{text-align:center;margin-top:34px;color:#E0A800;font-size:12px;font-weight:700;letter-spacing:1.5px}
+.sec{text-align:center;color:#7d8394;font-size:12px;margin-top:4px}
+h2{text-align:center;font-size:21px;margin:12px 0 24px;line-height:1.6;font-weight:800}
+.opts{display:flex;flex-direction:column;gap:10px;max-width:540px;width:100%;margin:0 auto}
+.opt{display:flex;align-items:center;gap:12px;background:#F2F2F4;border:2px solid transparent;border-radius:999px;padding:12px 20px;cursor:pointer;font-size:15px;font-family:inherit;color:#333;text-align:start;width:100%}
+.opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid #aaa;flex-shrink:0}
+.opt.sel .dot,.opt.right .dot{background:#1677FF;border-color:#1677FF}
+.opt.right{background:#E6F7EC;border-color:#2BA84A}
+.opt.wrong{background:#FDECEC;border-color:#E5484D}
+.opt:disabled{cursor:default}
+.fillbox{display:flex;gap:10px;max-width:540px;width:100%;margin:0 auto}
+.fill{flex:1;border:2px solid #dde3ef;border-radius:999px;padding:12px 20px;font-size:15px;font-family:inherit;outline:none}
+.fill:focus{border-color:#1677FF}
+.fb{margin:20px auto 0;max-width:540px;width:100%;border-radius:16px;padding:14px 18px;font-size:14px;line-height:1.8;display:none}
+.fb.ok{display:block;background:#E6F7EC;color:#1d7a3a}
+.fb.bad{display:block;background:#FDECEC;color:#8f1d20}
+.foot{margin-top:auto;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding-top:28px}
+.btn{background:#1677FF;color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:disabled{background:#c9d6ea;cursor:not-allowed}
+.btn.ghost{background:#EEF3FF;color:#1677FF}
+.lec{background:#F7F9FD;border-radius:18px;padding:22px;margin-top:14px;cursor:pointer;border:2px solid transparent}
+.lec:hover{border-color:#1677FF}
+.lec h3{margin:0 0 6px;font-size:18px}
+.lec p{margin:0;color:#7d8394;font-size:14px}
+.score{text-align:center;margin-top:40px}
+.score .big{font-size:56px;font-weight:800;color:#1677FF}
+.tpl{display:flex;justify-content:space-between;font-size:14px;margin-top:10px;margin-bottom:4px}
+.tpb{height:8px;background:#e6e9f0;border-radius:8px;overflow:hidden}
+.tpb>div{height:100%}
+.box{background:#F7F9FD;border-radius:16px;padding:16px 22px;margin-top:16px;text-align:start;font-size:14px}
+.box h4{margin:0 0 6px;font-size:15px}
+.box ul{margin:0;padding-inline-start:20px;line-height:1.9}
+.score{margin-top:24px !important}
+</style>
+</head>
+<body>
+<div class="card" id="app"></div>
+
+<script>
+/* s: mcq | tf | fill ; a: index (mcq/tf) or accepted answers (fill, lowercase)
+   e: Arabic explanation shown when the answer is wrong */
+const QS1 = [
+{s:"mcq",en:"Which of the following is a basic component of a computer network?",ar:"أي مما يلي يُعد مكوناً أساسياً من مكونات شبكة الحاسب؟",o:["Nodes, transmission media, and protocols","CPU, RAM, and ROM","Keyboard, mouse, and monitor","Files, folders, and programs"],oa:["العُقد ووسائط النقل والبروتوكولات","المعالج وذاكرتا RAM وROM","لوحة المفاتيح والماوس والشاشة","الملفات والمجلدات والبرامج"],a:0,e:"مكونات الشبكة الأساسية هي العُقد (Nodes) ووسائط النقل (Transmission media) والبروتوكولات. أما CPU وRAM فهي مكونات للجهاز نفسه وليست مكونات للشبكة."},
+{s:"mcq",en:"Which device is considered an end device?",ar:"أي جهاز يُعتبر End Device؟",o:["Router","Switch","Computer","Hub"],oa:["الراوتر","السويتش","الكمبيوتر","الهب"],a:2,e:"End Device هو الجهاز الذي يستخدمه المستخدم النهائي مثل الكمبيوتر. الراوتر والسويتش والهب أجهزة شبكة وسيطة (Intermediary devices) وظيفتها توصيل الأجهزة ببعض."},
+{s:"mcq",en:"Which transmission medium uses electrical signals?",ar:"أي وسيط نقل يستخدم الإشارات الكهربية؟",o:["Fiber optic cable","Copper cable","Wireless","Infrared only"],oa:["الكابل الضوئي","الكابل النحاسي","الشبكات اللاسلكية","الأشعة تحت الحمراء فقط"],a:1,e:"الكابل النحاسي (Copper) ينقل البيانات بإشارات كهربية. الألياف الضوئية تنقل بنبضات ضوء، والـ Wireless يستخدم موجات راديو، والأشعة تحت الحمراء تستخدم الضوء."},
+{s:"mcq",en:"Which transmission medium uses pulses of light?",ar:"أي وسيط نقل يستخدم نبضات الضوء؟",o:["UTP","STP","Coaxial cable","Fiber optic cable"],oa:["UTP","STP","الكابل المحوري","الألياف الضوئية"],a:3,e:"الألياف الضوئية (Fiber optic) تنقل البيانات بنبضات ضوئية. UTP وSTP والكابل المحوري كلها كابلات نحاسية تنقل إشارات كهربية."},
+{s:"mcq",en:"What is the main purpose of twisting wires in UTP cables?",ar:"ما الغرض الأساسي من لف الأسلاك في كابل UTP؟",o:["To increase cable length","To reduce electromagnetic interference","To increase IP addresses","To encrypt data"],oa:["زيادة طول الكابل","تقليل التداخل الكهرومغناطيسي","زيادة عناوين IP","تشفير البيانات"],a:1,e:"لف الأزواج من الأسلاك مع بعض (Twisting) يقلل التداخل الكهرومغناطيسي (EMI)، وهذا يحافظ على جودة الإشارة. اللف لا يغير طول الكابل ولا له علاقة بالتشفير أو عناوين IP."},
+{s:"mcq",en:"Which connector is commonly used with UTP Ethernet cables?",ar:"أي كونيكتور يُستخدم غالباً مع كابلات UTP الخاصة بالـ Ethernet؟",o:["RJ-45","USB","HDMI","VGA"],oa:["RJ-45","USB","HDMI","VGA"],a:0,e:"كونيكتور RJ-45 هو الذي يُستخدم مع كابلات Ethernet. أما USB وHDMI وVGA فلها استخدامات أخرى لا علاقة لها بشبكات Ethernet."},
+{s:"mcq",en:"Which cable type provides better protection against electromagnetic interference?",ar:"أي نوع كابل يوفر حماية أفضل ضد التداخل الكهرومغناطيسي؟",o:["UTP","STP","Straight-through","Crossover"],oa:["UTP","STP","Straight-through","Crossover"],a:1,e:"كابل STP (Shielded Twisted Pair) فيه طبقة حماية (Shielding) تقلل التداخل أكثر من UTP. Straight-through وCrossover أنواع توصيل للكابلات وليست أنواع حماية."},
+{s:"mcq",en:"A straight-through cable uses:",ar:"كابل Straight-through يستخدم:",o:["T568A on one end and T568B on the other","The same wiring standard on both ends","No color coding","Different connectors on both ends"],oa:["T568A في طرف وT568B في الطرف الآخر","نفس معيار التوصيل في الطرفين","بدون ترميز ألوان","كونيكتورات مختلفة في الطرفين"],a:1,e:"كابل Straight-through يستخدم نفس معيار الترتيب (T568A أو T568B) في الطرفين. أما استخدام T568A في طرف وT568B في الطرف الآخر فهو تعريف كابل Crossover."},
+{s:"mcq",en:"A crossover cable traditionally uses:",ar:"كابل Crossover يستخدم تقليدياً:",o:["T568A on both ends","T568B on both ends","T568A on one end and T568B on the other","RJ-11 on both ends"],oa:["T568A في الطرفين","T568B في الطرفين","T568A في طرف وT568B في الطرف الآخر","RJ-11 في الطرفين"],a:2,e:"كابل Crossover تقليدياً يستخدم T568A في طرف وT568B في الطرف الآخر، وهذا يعكس أزواج الإرسال والاستقبال. استخدام نفس المعيار في الطرفين هو Straight-through."},
+{s:"mcq",en:"What does DNS translate?",ar:"ماذا يحوّل DNS؟",o:["MAC address to IP address","Domain name to IP address","IP address to port number","Frame to packet"],oa:["عنوان MAC إلى عنوان IP","اسم الدومين إلى عنوان IP","عنوان IP إلى رقم منفذ","Frame إلى Packet"],a:1,e:"DNS (Domain Name System) يحوّل اسم الدومين مثل google.com إلى عنوان IP. تحويل MAC إلى IP من وظيفة ARP."},
+{s:"mcq",en:"What is the main function of ARP?",ar:"ما الوظيفة الأساسية لـ ARP؟",o:["Convert domain names to IP addresses","Discover a MAC address using an IP address","Assign IP addresses automatically","Select the best route"],oa:["تحويل أسماء الدومين إلى عناوين IP","اكتشاف عنوان MAC باستخدام عنوان IP","تعيين عناوين IP تلقائياً","اختيار أفضل مسار"],a:1,e:"ARP (Address Resolution Protocol) يكتشف عنوان MAC المرتبط بعنوان IP معين داخل الشبكة المحلية. تحويل أسماء الدومين من وظيفة DNS، وتعيين IP تلقائياً من وظيفة DHCP."},
+{s:"mcq",en:"An ARP Request is usually sent as:",ar:"يُرسل طلب ARP عادةً كـ:",o:["Unicast","Multicast","Broadcast","Anycast"],oa:["Unicast","Multicast","Broadcast","Anycast"],a:2,e:"طلب ARP يُرسل كـ Broadcast لكل الأجهزة في الشبكة، والجهاز صاحب عنوان IP المطلوب هو الذي يرد بعنوان MAC الخاص به."},
+{s:"mcq",en:"What does an IP address identify?",ar:"ماذا يحدد عنوان IP؟",o:["A network interface logically","A physical cable","A website name only","A switch port only"],oa:["واجهة الشبكة منطقياً","كابلاً فعلياً","اسم موقع فقط","منفذ السويتش فقط"],a:0,e:"عنوان IP يحدد واجهة الشبكة (Network interface) منطقياً على الشبكة. الكابل مكون مادي، واسم الموقع يحدده DNS، ومنفذ السويتش ليس له علاقة بالتعريف."},
+{s:"mcq",en:"How many bits are in an IPv4 address?",ar:"كم عدد البتات في عنوان IPv4؟",o:["16 bits","32 bits","48 bits","128 bits"],oa:["16 بت","32 بت","48 بت","128 بت"],a:1,e:"عنوان IPv4 طوله 32 بت. 128 بت هو طول عنوان IPv6، و48 بت هو طول عنوان MAC."},
+{s:"mcq",en:"How many bits are in an IPv6 address?",ar:"كم عدد البتات في عنوان IPv6؟",o:["32 bits","48 bits","64 bits","128 bits"],oa:["32 بت","48 بت","64 بت","128 بت"],a:3,e:"عنوان IPv6 طوله 128 بت. 32 بت هو طول IPv4 تقريباً في عدد البتات (32 بت)، و48 بت هو عنوان MAC."},
+{s:"mcq",en:"How many bits are in a standard MAC address?",ar:"كم عدد البتات في عنوان MAC القياسي؟",o:["32 bits","48 bits","64 bits","128 bits"],oa:["32 بت","48 بت","64 بت","128 بت"],a:1,e:"عنوان MAC القياسي طوله 48 بت (6 بايت)، ويُكتب عادةً في صورة ستة أزواج من الأرقام الست عشرية."},
+{s:"mcq",en:"What is the default broadcast address of 192.168.1.0/24?",ar:"ما عنوان الـ Broadcast الافتراضي للشبكة 192.168.1.0/24؟",o:["192.168.1.0","192.168.1.1","192.168.1.254","192.168.1.255"],oa:["192.168.1.0","192.168.1.1","192.168.1.254","192.168.1.255"],a:3,e:"في الشبكة /24 آخر عنوان هو عنوان الـ Broadcast، وهو 192.168.1.255. العنوان 192.168.1.0 هو عنوان الشبكة نفسها (Network address)."},
+{s:"mcq",en:"What is the main function of DHCP?",ar:"ما الوظيفة الأساسية لـ DHCP؟",o:["Translate private IP to public IP","Automatically assign IP configuration","Discover MAC addresses","Encrypt network traffic"],oa:["ترجمة IP الخاص إلى IP عام","توزيع إعدادات IP تلقائياً","اكتشاف عناوين MAC","تشفير حركة الشبكة"],a:1,e:"DHCP (Dynamic Host Configuration Protocol) يوزع إعدادات الشبكة تلقائياً مثل عنوان IP وSubnet Mask وDefault Gateway وDNS. ترجمة IP الخاص من وظيفة NAT."},
+{s:"mcq",en:"What address range is commonly associated with APIPA?",ar:"أي نطاق عناوين يرتبط عادةً بـ APIPA؟",o:["10.0.0.0/8","172.16.0.0/12","169.254.0.0/16","192.168.0.0/16"],oa:["10.0.0.0/8","172.16.0.0/12","169.254.0.0/16","192.168.0.0/16"],a:2,e:"APIPA يستخدم النطاق 169.254.0.0/16، ويعطيه الجهاز لنفسه عندما لا يجد خادم DHCP. النطاقات الأخرى هي عناوين IP خاصة (Private) لكن ليست لـ APIPA."},
+{s:"mcq",en:"What is the main purpose of NAT?",ar:"ما الغرض الأساسي من NAT؟",o:["Translate IP addresses","Detect frame errors","Compress data","Assign MAC addresses"],oa:["ترجمة عناوين IP","اكتشاف أخطاء الإطارات","ضغط البيانات","تعيين عناوين MAC"],a:0,e:"NAT (Network Address Translation) يترجم عناوين IP الخاصة إلى عناوين عامة والعكس، وده بيسمح لأجهزة كتير تستخدم عنوان عام واحد."},
+{s:"mcq",en:"How many layers are in the TCP/IP model?",ar:"كم عدد طبقات نموذج TCP/IP؟",o:["4","5","6","7"],oa:["4","5","6","7"],a:0,e:"نموذج TCP/IP فيه 4 طبقات: Application وTransport وInternet وNetwork Access. نموذج OSI هو اللي فيه 7 طبقات."},
+{s:"mcq",en:"Which TCP/IP layer determines the best path through the network?",ar:"أي طبقة في TCP/IP تحدد أفضل مسار عبر الشبكة؟",o:["Application","Transport","Internet","Network Access"],oa:["طبقة التطبيقات (Application)","طبقة النقل (Transport)","طبقة الإنترنت (Internet)","طبقة الوصول للشبكة (Network Access)"],a:2,e:"طبقة Internet (زي بروتوكول IP) هي المسؤولة عن تحديد أفضل مسار (Routing) للبيانات عبر الشبكات المختلفة."},
+{s:"mcq",en:"How many layers are in the OSI model?",ar:"كم عدد طبقات نموذج OSI؟",o:["4","5","6","7"],oa:["4","5","6","7"],a:3,e:"نموذج OSI فيه 7 طبقات: Physical وData Link وNetwork وTransport وSession وPresentation وApplication."},
+{s:"mcq",en:"Which OSI layer converts bits into suitable signals?",ar:"أي طبقة في OSI تحول البتات إلى إشارات مناسبة؟",o:["Data Link","Physical","Network","Transport"],oa:["طبقة ربط البيانات (Data Link)","الطبقة الفيزيائية (Physical)","طبقة الشبكة (Network)","طبقة النقل (Transport)"],a:1,e:"الطبقة الفيزيائية (Physical) تحول البتات إلى إشارات كهربية أو ضوئية أو لاسلكية مناسبة لوسيط النقل."},
+{s:"mcq",en:"Which OSI layer is responsible for Frames and MAC addressing?",ar:"أي طبقة في OSI مسؤولة عن الـ Frames وعنونة MAC؟",o:["Physical","Data Link","Network","Session"],oa:["الفيزيائية (Physical)","ربط البيانات (Data Link)","الشبكة (Network)","الجلسة (Session)"],a:1,e:"طبقة Data Link مسؤولة عن تغليف البيانات في Frames وعنونة MAC. الطبقة Network هي اللي بتستخدم IP."},
+{s:"mcq",en:"Which OSI layer uses logical IP addresses and routing?",ar:"أي طبقة في OSI تستخدم عناوين IP المنطقية والتوجيه (Routing)؟",o:["Data Link","Transport","Network","Presentation"],oa:["ربط البيانات (Data Link)","النقل (Transport)","الشبكة (Network)","العرض (Presentation)"],a:2,e:"طبقة Network تستخدم العناوين المنطقية (IP) وتحدد المسار عبر الشبكات (Routing)."},
+{s:"mcq",en:"Which two protocols are commonly used at the Transport layer?",ar:"أي بروتوكولين يُستخدمان عادةً في طبقة Transport؟",o:["HTTP and FTP","TCP and UDP","ARP and DNS","IP and ICMP"],oa:["HTTP وFTP","TCP وUDP","ARP وDNS","IP وICMP"],a:1,e:"بروتوكولا طبقة Transport الأساسيان هما TCP وUDP. HTTP وFTP بروتوكولات طبقة Application، وARP وDNS وIP وICMP في طبقات أخرى."},
+{s:"mcq",en:"Which protocol is more suitable when reliable delivery is required?",ar:"أي بروتوكول أنسب عندما يكون التسليم الموثوق مطلوباً؟",o:["UDP","TCP","ICMP","ARP"],oa:["UDP","TCP","ICMP","ARP"],a:1,e:"TCP بيضمن وصول البيانات كاملة وبالترتيب الصحيح (Reliable). UDP أسرع لكن من غير ضمان للوصول أو الترتيب."},
+{s:"mcq",en:"Which OSI layer manages sessions between computers?",ar:"أي طبقة في OSI تدير الجلسات بين الأجهزة؟",o:["Application","Presentation","Session","Physical"],oa:["التطبيقات (Application)","العرض (Presentation)","الجلسة (Session)","الفيزيائية (Physical)"],a:2,e:"طبقة Session مسؤولة عن فتح الجلسات بين الأجهزة وإدارتها وإنهائها."},
+{s:"mcq",en:"Which OSI layer handles data encryption, decryption, and compression?",ar:"أي طبقة في OSI تتعامل مع تشفير البيانات وفك تشفيرها وضغطها؟",o:["Session","Presentation","Network","Data Link"],oa:["الجلسة (Session)","العرض (Presentation)","الشبكة (Network)","ربط البيانات (Data Link)"],a:1,e:"طبقة Presentation مسؤولة عن التشفير وفك التشفير والضغط وتحويل تنسيقات البيانات."},
+{s:"mcq",en:"Which protocol is used for sending emails?",ar:"أي بروتوكول يُستخدم لإرسال الإيميلات؟",o:["POP3","FTP","SMTP","ARP"],oa:["POP3","FTP","SMTP","ARP"],a:2,e:"SMTP (Simple Mail Transfer Protocol) هو البروتوكول المستخدم لإرسال الإيميلات. POP3 يُستخدم لاستقبالها."},
+{s:"mcq",en:"Which protocol is commonly used to receive emails?",ar:"أي بروتوكول يُستخدم عادةً لاستقبال الإيميلات؟",o:["SMTP","POP3","ICMP","DHCP"],oa:["SMTP","POP3","ICMP","DHCP"],a:1,e:"POP3 يُستخدم لاستقبال الإيميلات من السيرفر. SMTP يُستخدم للإرسال."},
+{s:"mcq",en:"Which protocol is commonly used for file transfer?",ar:"أي بروتوكول يُستخدم عادةً لنقل الملفات؟",o:["FTP","DNS","ARP","ICMP"],oa:["FTP","DNS","ARP","ICMP"],a:0,e:"FTP (File Transfer Protocol) مخصص لنقل الملفات بين الأجهزة. DNS لأسماء الدومينات، وARP لعناوين MAC، وICMP للرسائل والتشخيص."},
+{s:"mcq",en:"Which command is commonly used to test connectivity using ICMP?",ar:"أي أمر يُستخدم عادةً لاختبار الاتصال باستخدام ICMP؟",o:["ipconfig","ping","format","mkdir"],oa:["ipconfig","ping","format","mkdir"],a:1,e:"أمر ping بيستخدم بروتوكول ICMP لاختبار الاتصال بين جهازين. ipconfig بيعرض إعدادات الشبكة، وformat وmkdir ليس لهم علاقة بالشبكات."},
+{s:"mcq",en:"What does LLC stand for?",ar:"ماذا تعني اختصار LLC؟",o:["Logical Link Control","Local Layer Connection","Link Line Communication","Logical Network Control"],oa:["التحكم في الرابط المنطقي (Logical Link Control)","Local Layer Connection","Link Line Communication","Logical Network Control"],a:0,e:"LLC اختصار لـ Logical Link Control، وهو جزء من طبقة Data Link."},
+{s:"mcq",en:"What does MAC stand for?",ar:"ماذا تعني اختصار MAC؟",o:["Media Access Control","Machine Address Connection","Multiple Access Communication","Media Application Control"],oa:["التحكم في الوصول للوسيط (Media Access Control)","Machine Address Connection","Multiple Access Communication","Media Application Control"],a:0,e:"MAC اختصار لـ Media Access Control، وهو عنوان فيزيائي ثابت لكرت الشبكة."},
+{s:"mcq",en:"Which OSI layer provides node-to-node data transfer?",ar:"أي طبقة في OSI توفر نقل البيانات بين عقدتين متجاورتين (Node-to-node)؟",o:["Physical","Data Link","Network","Application"],oa:["الفيزيائية (Physical)","ربط البيانات (Data Link)","الشبكة (Network)","التطبيقات (Application)"],a:1,e:"طبقة Data Link توفر نقل البيانات بين عقدتين متجاورتين على نفس الشبكة المحلية (Node-to-node)."},
+{s:"mcq",en:"Which OSI layer segments and reassembles data?",ar:"أي طبقة في OSI تقسم البيانات وتعيد تجميعها؟",o:["Transport","Session","Presentation","Physical"],oa:["النقل (Transport)","الجلسة (Session)","العرض (Presentation)","الفيزيائية (Physical)"],a:0,e:"طبقة Transport تقسم البيانات الكبيرة إلى أجزاء (Segmentation) وتعيد تجميعها عند الاستقبال."},
+{s:"mcq",en:"Which OSI layer is closest to the end user?",ar:"أي طبقة في OSI هي الأقرب للمستخدم النهائي؟",o:["Physical","Data Link","Network","Application"],oa:["الفيزيائية (Physical)","ربط البيانات (Data Link)","الشبكة (Network)","التطبيقات (Application)"],a:3,e:"طبقة Application هي الأقرب للمستخدم، وهي اللي بيتعامل معاها مباشرة (مثل المتصفح والإيميل)."},
+{s:"mcq",en:"Which TCP/IP layer combines the OSI Application, Presentation, and Session layers?",ar:"أي طبقة في TCP/IP تجمع طبقات Application وPresentation وSession في OSI؟",o:["Transport","Internet","Application","Network Access"],oa:["النقل (Transport)","الإنترنت (Internet)","التطبيقات (Application)","الوصول للشبكة (Network Access)"],a:2,e:"طبقة Application في TCP/IP تجمع الوظائف الثلاث الموجودة في طبقات Application وPresentation وSession في نموذج OSI."},
+{s:"tf",en:"The Physical layer works with bits and transmission signals.",ar:"طبقة Physical تتعامل مع البتات وإشارات النقل.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. الطبقة الفيزيائية تتعامل مع البتات وتحولها إلى إشارات تُرسل عبر وسيط النقل."},
+{s:"tf",en:"Fiber optic cables transmit data using electrical signals.",ar:"الألياف الضوئية تنقل البيانات باستخدام إشارات كهربية.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. الألياف الضوئية تنقل البيانات باستخدام نبضات ضوئية، والإشارات الكهربية تُستخدم في الكابلات النحاسية."},
+{s:"tf",en:"UTP cables use twisted pairs to reduce interference.",ar:"كابلات UTP تستخدم الأزواج الملتوية لتقليل التداخل.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. الأزواج الملتوية (Twisted pairs) تقلل التداخل الكهرومغناطيسي بين الأسلاك."},
+{s:"tf",en:"ARP translates domain names into IP addresses.",ar:"ARP يحوّل أسماء الدومينات إلى عناوين IP.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. ARP يحوّل عنوان IP إلى عنوان MAC. اللي بيحول اسم الدومين إلى IP هو DNS."},
+{s:"tf",en:"A MAC address is normally 48 bits long.",ar:"عنوان MAC طوله عادةً 48 بت.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. عنوان MAC القياسي طوله 48 بت."},
+{s:"tf",en:"DHCP automatically assigns network configuration to devices.",ar:"DHCP يوزع إعدادات الشبكة على الأجهزة تلقائياً.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. DHCP يوزع إعدادات مثل IP وSubnet Mask وGateway وDNS تلقائياً على الأجهزة."},
+{s:"tf",en:"APIPA commonly assigns addresses beginning with 169.254.",ar:"APIPA يعين عادةً عناوين تبدأ بـ 169.254.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. APIPA يعين عناوين من النطاق 169.254.0.0/16."},
+{s:"tf",en:"The OSI model consists of four layers.",ar:"نموذج OSI يتكون من أربع طبقات.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. نموذج OSI يتكون من 7 طبقات. أما TCP/IP فيتكون من 4 طبقات."},
+{s:"tf",en:"UDP guarantees that all data packets arrive in order.",ar:"UDP يضمن وصول كل حزم البيانات بالترتيب الصحيح.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. UDP لا يضمن الوصول ولا الترتيب، وده اللي بيضمنه TCP."},
+{s:"tf",en:"The Presentation layer can handle encryption and compression.",ar:"طبقة Presentation تستطيع التعامل مع التشفير والضغط.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. طبقة Presentation مسؤولة عن التشفير وفك التشفير والضغط."},
+{s:"fill",en:"The TCP/IP model consists of _____ layers.",ar:"يتكون نموذج TCP/IP من _____ طبقات.",show:"4",a:["4","four"],e:"نموذج TCP/IP يتكون من 4 طبقات."},
+{s:"fill",en:"The OSI model consists of _____ layers.",ar:"يتكون نموذج OSI من _____ طبقات.",show:"7",a:["7","seven"],e:"نموذج OSI يتكون من 7 طبقات."},
+{s:"fill",en:"The Data Link layer packages data into _____.",ar:"طبقة Data Link تغلّف البيانات في _____.",show:"Frames",a:["frames","frame"],e:"طبقة Data Link تغلّف البيانات في Frames."},
+{s:"fill",en:"The Network layer uses logical addresses such as _____.",ar:"طبقة Network تستخدم عناوين منطقية مثل _____.",show:"IP addresses",a:["ip addresses","ip address","ip"],e:"طبقة Network تستخدم العناوين المنطقية مثل IP addresses."},
+{s:"fill",en:"The protocol used to send emails is _____.",ar:"البروتوكول المستخدم لإرسال الإيميلات هو _____.",show:"SMTP",a:["smtp"],e:"البروتوكول المستخدم لإرسال الإيميلات هو SMTP."}
+];
+
+const QS3 = [
+{s:"mcq",en:"Which layer does a router primarily operate on?",ar:"في أي طبقة يعمل الراوتر أساساً؟",o:["Physical Layer","Data Link Layer","Network Layer","Transport Layer"],oa:["الطبقة الفيزيائية (Physical)","طبقة ربط البيانات (Data Link)","طبقة الشبكة (Network)","طبقة النقل (Transport)"],a:2,e:"الراوتر يعمل أساساً في طبقة الشبكة (Network Layer) لأنه يعتمد على عناوين IP المنطقية لتحديد المسار. السويتش يعمل في طبقة Data Link."},
+{s:"mcq",en:"Which address does a switch use to forward frames?",ar:"أي عنوان يستخدمه السويتش لتمرير الـ Frames؟",o:["IP Address","MAC Address","Port Number","Subnet Mask"],oa:["عنوان IP","عنوان MAC","رقم المنفذ","Subnet Mask"],a:1,e:"السويتش يقرأ عنوان MAC الموجود في الـ Frame ويحدد المنفذ الذي يرسل عليه. عنوان IP يستخدمه الراوتر."},
+{s:"mcq",en:"What does a routing table contain?",ar:"ماذا يحتوي جدول التوجيه (Routing Table)؟",o:["MAC addresses only","IP networks and paths to reach them","Router passwords","Physical addresses only"],oa:["عناوين MAC فقط","شبكات IP والمسارات للوصول إليها","كلمات مرور الراوتر","عناوين فيزيائية فقط"],a:1,e:"جدول التوجيه يحتوي على شبكات IP وطريقة الوصول إليها، أي الـ next hop أو الواجهة (Interface) المستخدمة."},
+{s:"mcq",en:"What is the primary function of routing?",ar:"ما الوظيفة الأساسية للتوجيه (Routing)؟",o:["Determining the best path","Assigning MAC addresses","Encrypting packets","Connecting cables"],oa:["تحديد أفضل مسار","تعيين عناوين MAC","تشفير الحزم","توصيل الكابلات"],a:0,e:"الوظيفة الأساسية للتوجيه هي تحديد أفضل مسار لإيصال الحزمة إلى الشبكة الوجهة."},
+{s:"mcq",en:"What does Longest Prefix Match select?",ar:"ماذا تختار خاصية Longest Prefix Match؟",o:["The route with the lowest prefix length","The route with the largest matching prefix length","The route with the highest IP address","The oldest route"],oa:["المسار ذو أقل طول prefix","المسار ذو أكبر طول prefix متطابق","المسار ذو أعلى عنوان IP","أقدم مسار"],a:1,e:"Longest Prefix Match تختار المسار الذي يطابق أكبر عدد من بتات العنوان، يعني الشبكة الأكثر تحديداً."},
+{s:"mcq",en:"Which route is preferred for destination 192.168.1.50 if all routes match?",ar:"أي مسار يُفضل للوجهة 192.168.1.50 لو كل المسارات متطابقة؟",o:["192.168.0.0/16","192.168.1.0/24","192.168.1.32/27","All are equal"],oa:["192.168.0.0/16","192.168.1.0/24","192.168.1.32/27","كلها متساوية"],a:2,e:"المسار /27 هو الأطول prefix (27 بت)، والعنوان .50 يقع داخل نطاقه (من .32 إلى .63)، فيُختار بقاعدة Longest Prefix Match."},
+{s:"mcq",en:"What does Metric represent?",ar:"ماذا تمثل الـ Metric؟",o:["Router password","Cost of reaching a network","MAC address","Number of interfaces"],oa:["كلمة مرور الراوتر","تكلفة الوصول إلى شبكة","عنوان MAC","عدد الواجهات"],a:1,e:"الـ Metric قيمة تمثل تكلفة الوصول إلى شبكة معينة، والمسار الأقل تكلفة يُفضل."},
+{s:"mcq",en:"Which routing protocol uses Hop Count?",ar:"أي بروتوكول توجيه يستخدم Hop Count؟",o:["OSPF","EIGRP","RIP","IS-IS"],oa:["OSPF","EIGRP","RIP","IS-IS"],a:2,e:"RIP يستخدم عدد القفزات (Hop Count) كـ metric. OSPF يستخدم Cost، وEIGRP يستخدم Bandwidth وDelay."},
+{s:"mcq",en:"What is the maximum number of hops allowed by RIP?",ar:"ما أقصى عدد قفزات يسمح به RIP؟",o:["10","15","20","255"],oa:["10","15","20","255"],a:1,e:"RIP يسمح بحد أقصى 15 قفزة، والـ 16 تعني أن الشبكة غير قابلة للوصول (Unreachable)."},
+{s:"mcq",en:"Which metric does OSPF use?",ar:"أي metric يستخدمه OSPF؟",o:["Hop Count","Cost","MAC Address","Reliability only"],oa:["Hop Count","Cost","عنوان MAC","Reliability فقط"],a:1,e:"OSPF يستخدم الـ Cost، وهو مبني على سرعة الرابط (Bandwidth)."},
+{s:"mcq",en:"Which factors are used by EIGRP to calculate its metric?",ar:"أي عوامل يستخدمها EIGRP لحساب الـ metric؟",o:["Bandwidth and Delay","IP and MAC","Hop Count only","Cost only"],oa:["Bandwidth وDelay","IP وMAC","Hop Count فقط","Cost فقط"],a:0,e:"EIGRP يحسب الـ metric أساساً من Bandwidth وDelay."},
+{s:"mcq",en:"What does Administrative Distance represent?",ar:"ماذا تمثل Administrative Distance؟",o:["Network speed","Route source trustworthiness","Number of hops","Bandwidth"],oa:["سرعة الشبكة","مدى الثقة في مصدر المسار","عدد القفزات","عرض النطاق"],a:1,e:"الـ AD تحدد مدى الثقة في مصدر المسار، والمسار ذو الـ AD الأقل يُفضل عند وجود أكثر من مصدر لنفس الشبكة."},
+{s:"mcq",en:"Which route source has the lowest AD?",ar:"أي مصدر مسار له أقل AD؟",o:["RIP","OSPF","Static Route","Internal EIGRP"],oa:["RIP","OSPF","Static Route","Internal EIGRP"],a:2,e:"الـ Static Route له AD = 1 وهو الأقل. Internal EIGRP = 90، وOSPF = 110، وRIP = 120."},
+{s:"mcq",en:"What is the default AD value of OSPF?",ar:"ما قيمة الـ AD الافتراضية لـ OSPF؟",o:["90","100","110","120"],oa:["90","100","110","120"],a:2,e:"قيمة الـ AD الافتراضية لـ OSPF هي 110."},
+{s:"mcq",en:"Which protocol supports Unequal Cost Load Balancing?",ar:"أي بروتوكول يدعم Unequal Cost Load Balancing؟",o:["RIP","OSPF","EIGRP","All protocols"],oa:["RIP","OSPF","EIGRP","كل البروتوكولات"],a:2,e:"EIGRP يدعم Unequal Cost Load Balancing، وهو اللي بيسمح بتوزيع الحمل على مسارات بتكلفة مختلفة."},
+{s:"tf",en:"A router uses a routing table to determine the best path.",ar:"الراوتر يستخدم جدول التوجيه لتحديد أفضل مسار.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. الراوتر يبحث في جدول التوجيه عن أفضل مسار للوجهة."},
+{s:"tf",en:"RIP uses bandwidth to calculate its metric.",ar:"RIP يستخدم عرض النطاق (Bandwidth) لحساب الـ metric.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. RIP يستخدم عدد القفزات (Hop Count) فقط."},
+{s:"tf",en:"A lower Administrative Distance means a more preferred route source.",ar:"كل ما قلت الـ AD، كان مصدر المسار أكثر تفضيلاً.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. الـ AD الأقل يعني مصدر مسار أكثر ثقة وأولوية."},
+{s:"tf",en:"Equal Cost Load Balancing uses multiple paths with different metric values.",ar:"Equal Cost Load Balancing يستخدم مسارات متعددة بقيم metric مختلفة.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. Equal Cost Load Balancing يستخدم مسارات لها نفس قيمة الـ metric."},
+{s:"tf",en:"OSPF assigns lower cost to faster links.",ar:"OSPF يعطي cost أقل للروابط الأسرع.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. كل ما الرابط أسرع، كان الـ cost الخاص به أقل."},
+{s:"mcq",en:"A router primarily operates at Layer ______.",ar:"الراوتر يعمل أساساً في طبقة ______.",o:["2","3","4","7"],oa:["2","3","4","7"],a:1,e:"الراوتر يعمل في الطبقة 3 (Network Layer)، والسويتش يعمل في الطبقة 2 (Data Link)."},
+{s:"mcq",en:"The routing protocol that uses Hop Count is ______.",ar:"بروتوكول التوجيه الذي يستخدم Hop Count هو ______.",o:["OSPF","EIGRP","RIP","IS-IS"],oa:["OSPF","EIGRP","RIP","IS-IS"],a:2,e:"RIP هو البروتوكول الذي يعتمد على Hop Count."},
+{s:"mcq",en:"The maximum Hop Count in RIP is ______.",ar:"أقصى Hop Count في RIP هو ______.",o:["10","15","16","20"],oa:["10","15","16","20"],a:1,e:"أقصى عدد قفزات قابل للاستخدام في RIP هو 15، والـ 16 تعني أن الشبكة غير قابلة للوصول."},
+{s:"mcq",en:"The lowest Administrative Distance belongs to the ______ route.",ar:"أقل Administrative Distance يخص المسار ______.",o:["Static","RIP","OSPF","Internal EIGRP"],oa:["Static (ثابت)","RIP","OSPF","Internal EIGRP"],a:0,e:"الـ Static Route له AD = 1، وهو الأقل بين كل المصادر."},
+{s:"mcq",en:"Using multiple paths with equal metric values is called ______.",ar:"استخدام مسارات متعددة بقيم metric متساوية يسمى ______.",o:["Path Determination","Load Balancing","Longest Prefix Match","Packet Forwarding"],oa:["تحديد المسار (Path Determination)","توزيع الحمل (Load Balancing)","Longest Prefix Match","تمرير الحزم (Packet Forwarding)"],a:1,e:"هذا يسمى Load Balancing، وتحديداً Equal Cost Load Balancing لما تكون المسارات متساوية في الـ metric."}
+];
+
+const A_BASIC="أساسيات الشبكات والأجهزة", A_MEDIA="وسائط النقل والكابلات", A_ADDR="عناوين IP وMAC", A_SERV="خدمات الشبكة (DNS، ARP، DHCP، NAT)", A_MODEL="نماذج OSI وTCP/IP", A_PROTO="بروتوكولات النقل والتطبيقات";
+const R_BASIC="أساسيات التوجيه", R_PROTO="بروتوكولات التوجيه (RIP، OSPF، EIGRP)", R_PREF="المفاضلة بين المسارات (AD، Metric، LPM)";
+const TP1=[A_BASIC,A_BASIC,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_SERV,A_SERV,A_SERV,A_ADDR,A_ADDR,A_ADDR,A_ADDR,A_ADDR,A_SERV,A_SERV,A_SERV,A_MODEL,A_MODEL,A_MODEL,A_MODEL,A_MODEL,A_MODEL,A_PROTO,A_PROTO,A_MODEL,A_MODEL,A_PROTO,A_PROTO,A_PROTO,A_PROTO,A_BASIC,A_BASIC,A_MODEL,A_PROTO,A_MODEL,A_MODEL,A_MODEL,A_MEDIA,A_MEDIA,A_SERV,A_ADDR,A_SERV,A_SERV,A_MODEL,A_PROTO,A_MODEL,A_MODEL,A_MODEL,A_MODEL,A_ADDR,A_PROTO];
+const TP3=[R_BASIC,A_BASIC,R_BASIC,R_BASIC,R_PREF,R_PREF,R_PREF,R_PROTO,R_PROTO,R_PROTO,R_PROTO,R_PREF,R_PREF,R_PREF,R_PROTO,R_BASIC,R_PROTO,R_PREF,R_BASIC,R_PROTO,R_BASIC,R_PROTO,R_PROTO,R_PREF,R_BASIC];
+
+const B1="أساسيات جداول التوجيه", B2="رموز جدول التوجيه", B3="المفاضلة بين مصادر المسارات (AD)", B4="الـ Metric والـ Next-hop والمسارات المتصلة", B5="المسار الافتراضي (Default Route)", B6="المسارات الثابتة (Static)", B7="التوجيه الديناميكي", B8="بروتوكولات التوجيه الديناميكي";
+const TP4=[B1,B1,B2,B2,B2,B2,B3,B3,B3,B3,B4,B4,B4,B4,B4,B4,B4,B5,B5,B5,B6,B6,B7,B7,B6,B7,B7,B8,B8,B8,
+B1,B2,B2,B2,B2,B3,B3,B4,B4,B4,B4,B4,B5,B5,B6,B6,B7,B8,B8,B8];
+
+const QS4 = [
+{s:"mcq",en:"What is the main purpose of routing?",ar:"ما الغرض الأساسي من التوجيه (Routing)؟",o:["Assigning MAC addresses","Determining the path used to forward packets","Creating user accounts","Encrypting network traffic"],oa:["تعيين عناوين MAC","تحديد المسار المستخدم لتمرير الحزم","إنشاء حسابات المستخدمين","تشفير حركة الشبكة"],a:1,e:"التوجيه بيحدد المسار اللي هتتبعه الحزم عشان توصل للوجهة."},
+{s:"mcq",en:"Which of the following can provide routes to a routing table?",ar:"أي مما يلي يمكن أن يوفر مسارات لجدول التوجيه؟",o:["Directly connected networks","Static routes","Dynamic routing protocols","All of the above"],oa:["الشبكات المتصلة مباشرة","المسارات الثابتة (Static)","بروتوكولات التوجيه الديناميكي","كل ما سبق"],a:3,e:"المسارات ممكن تيجي من ثلاث مصادر: الشبكات المتصلة مباشرة، والمسارات الثابتة، وبروتوكولات التوجيه الديناميكي."},
+{s:"mcq",en:"Which routing table code identifies a directly connected network?",ar:"أي رمز في جدول التوجيه يدل على شبكة متصلة مباشرة؟",o:["L","C","S","O"],oa:["L","C","S","O"],a:1,e:"الرمز C يدل على الشبكة المتصلة مباشرة (Directly connected). الرمز L يدل على عنوان الواجهة المحلية نفسها."},
+{s:"mcq",en:"Which routing table code identifies a local interface address?",ar:"أي رمز يدل على عنوان الواجهة المحلية (Local)؟",o:["L","C","S","*"],oa:["L","C","S","*"],a:0,e:"الرمز L يدل على عنوان الواجهة المحلية نفسها، أما C فيدل على الشبكة المتصلة."},
+{s:"mcq",en:"Which routing table code identifies a static route?",ar:"أي رمز يدل على المسار الثابت (Static)؟",o:["O","C","S","L"],oa:["O","C","S","L"],a:2,e:"الرمز S يدل على المسار الثابت (Static route)."},
+{s:"mcq",en:"Which routing table code identifies a route learned through OSPF?",ar:"أي رمز يدل على مسار تعلمه الراوتر من OSPF؟",o:["O","S","C","L"],oa:["O","S","C","L"],a:0,e:"الرمز O يدل على مسار تعلمه الراوتر من بروتوكول OSPF."},
+{s:"mcq",en:"What does administrative distance indicate?",ar:"ماذا تبين Administrative Distance؟",o:["Route bandwidth","Trustworthiness of the route source","Packet size","Number of router interfaces"],oa:["عرض نطاق المسار","مدى الثقة في مصدر المسار","حجم الحزمة","عدد واجهات الراوتر"],a:1,e:"الـ AD تحدد مدى ثقة الراوتر في مصدر المسار، والقيمة الأقل أفضل."},
+{s:"mcq",en:"What is the administrative distance of a static route according to the lecture?",ar:"ما قيمة Administrative Distance للمسار الثابت حسب المحاضرة؟",o:["0","1","90","120"],oa:["0","1","90","120"],a:1,e:"المسار الثابت له AD = 1."},
+{s:"mcq",en:"What is the administrative distance of OSPF?",ar:"ما قيمة Administrative Distance لـ OSPF؟",o:["20","90","110","120"],oa:["20","90","110","120"],a:2,e:"OSPF له AD = 110."},
+{s:"mcq",en:"What is the administrative distance of RIP?",ar:"ما قيمة Administrative Distance لـ RIP؟",o:["1","90","110","120"],oa:["1","90","110","120"],a:3,e:"RIP له AD = 120."},
+{s:"mcq",en:"What does a route metric help determine?",ar:"ماذا يساعد الـ Route Metric في تحديده؟",o:["The preferred route based on the routing protocol's metric","Router username","Destination MAC address","Number of interfaces"],oa:["المسار المفضل حسب الـ metric الخاص ببروتوكول التوجيه","اسم مستخدم الراوتر","عنوان MAC للوجهة","عدد الواجهات"],a:0,e:"الـ metric بيحدد المسار الأفضل داخل نفس البروتوكول."},
+{s:"mcq",en:"What is the next-hop address?",ar:"ما هو عنوان الـ Next-hop؟",o:["The final user's address","The IP address of the next router to which a packet is forwarded","Router hostname","Subnet mask"],oa:["عنوان المستخدم النهائي","عنوان IP للراوتر التالي الذي تُرسل إليه الحزمة","اسم الراوتر","Subnet mask"],a:1,e:"الـ next-hop هو عنوان IP للراوتر اللي الحزمة هتتبعت له بعد كده."},
+{s:"mcq",en:"What does the exit interface identify?",ar:"ماذا تحدد الـ Exit Interface؟",o:["The interface used to send packets toward their destination","A disabled interface","The destination network name","The routing protocol version"],oa:["الواجهة المستخدمة لإرسال الحزم نحو الوجهة","واجهة معطلة","اسم شبكة الوجهة","إصدار بروتوكول التوجيه"],a:0,e:"الـ exit interface هي الواجهة اللي الراوتر بيخرج منها بالحزمة."},
+{s:"mcq",en:"What does the destination network prefix length specify?",ar:"ماذا يحدد طول الـ prefix الخاص بشبكة الوجهة؟",o:["The number of far-left bits that must match","Number of routers","Number of packets","Route metric value"],oa:["عدد البتات الأولى من اليسار التي يجب أن تتطابق","عدد الراوترات","عدد الحزم","قيمة الـ metric"],a:0,e:"طول الـ prefix بيحدد عدد البتات من اليسار اللي لازم تتطابق مع العنوان."},
+{s:"mcq",en:"When does a router add a directly connected route to its routing table?",ar:"متى يضيف الراوتر المسار المتصل مباشرة إلى جدول التوجيه؟",o:["When a file is created","When an interface has an IP address and is activated","When RIP is disabled","Only after a static route is added"],oa:["عند إنشاء ملف","عندما تكون الواجهة معينة بعنوان IP وتكون فعالة","عند تعطيل RIP","فقط بعد إضافة مسار ثابت"],a:1,e:"المسار المتصل مباشرة بيتضاف لما الواجهة تكون مفعلة ومعينة لها IP وSubnet mask."},
+{s:"mcq",en:"What prefix length is used for an IPv4 local route?",ar:"ما طول الـ prefix المستخدم لمسار Local في IPv4؟",o:["/24","/16","/32","/128"],oa:["/24","/16","/32","/128"],a:2,e:"مسار Local في IPv4 يستخدم /32 لأنه يمثل عنوان واجهة واحد."},
+{s:"mcq",en:"What prefix length is used for an IPv6 local route?",ar:"ما طول الـ prefix المستخدم لمسار Local في IPv6؟",o:["/32","/64","/128","/0"],oa:["/32","/64","/128","/0"],a:2,e:"مسار Local في IPv6 يستخدم /128 لأنه يمثل عنوان واحد."},
+{s:"mcq",en:"What is the purpose of a default route?",ar:"ما الغرض من الـ Default Route؟",o:["Forwarding packets when no specific matching route exists","Removing routing table entries","Assigning IP addresses automatically","Replacing directly connected routes"],oa:["تمرير الحزم عندما لا يوجد مسار محدد يطابق الوجهة","حذف مدخلات جدول التوجيه","تعيين عناوين IP تلقائياً","استبدال المسارات المتصلة مباشرة"],a:0,e:"الـ default route بيُستخدم لما مفيش مسار أكثر تحديداً يطابق الوجهة."},
+{s:"mcq",en:"Which IPv4 prefix represents a default route?",ar:"أي prefix في IPv4 يمثل الـ default route؟",o:["192.168.1.0/24","127.0.0.1/8","0.0.0.0/0","255.255.255.255/32"],oa:["192.168.1.0/24","127.0.0.1/8","0.0.0.0/0","255.255.255.255/32"],a:2,e:"الـ default route في IPv4 هو 0.0.0.0/0."},
+{s:"mcq",en:"A default route is also known as the:",ar:"الـ default route يُعرف أيضاً باسم:",o:["Child route","Gateway of last resort","Local route","Loopback route"],oa:["المسار التابع (Child route)","بوابة الملاذ الأخير (Gateway of last resort)","المسار المحلي (Local route)","مسار الـ Loopback"],a:1,e:"الـ default route يُسمى Gateway of last resort لأنه بيُستخدم لما مفيش مسار آخر."},
+{s:"mcq",en:"How are static routes configured?",ar:"كيف يتم إعداد المسارات الثابتة؟",o:["Automatically by routers","Manually by a network administrator","Only by end users","By DNS servers"],oa:["تلقائياً بواسطة الراوترات","يدوياً بواسطة مسؤول الشبكة","فقط بواسطة المستخدمين النهائيين","بواسطة خوادم DNS"],a:1,e:"المسارات الثابتة بيكتبها مسؤول الشبكة يدوياً."},
+{s:"mcq",en:"What happens when a static route's network topology changes?",ar:"ماذا يحدث عندما تتغير طوبولوجيا الشبكة الخاصة بالمسار الثابت؟",o:["It always updates automatically","It may need to be manually reconfigured","It deletes all routes","It becomes an OSPF route automatically"],oa:["يتحدث تلقائياً دائماً","قد يحتاج إلى إعادة ضبط يدوي","يحذف كل المسارات","يتحول تلقائياً إلى مسار OSPF"],a:1,e:"المسار الثابت ما بيتغيرش لوحده، فلو الطوبولوجيا اتغيرت ممكن يحتاج تعديل يدوي."},
+{s:"mcq",en:"What is a key benefit of dynamic routing protocols?",ar:"ما الميزة الأساسية لبروتوكولات التوجيه الديناميكي؟",o:["Automatically sharing reachability information about remote networks","Requiring no CPU or memory","Working with only one router","Never responding to topology changes"],oa:["مشاركة معلومات الوصول للشبكات البعيدة تلقائياً","لا تحتاج إلى معالج أو ذاكرة","تعمل مع راوتر واحد فقط","لا تستجيب أبداً لتغيرات الطوبولوجيا"],a:0,e:"البروتوكولات الديناميكية بتتبادل معلومات الشبكات تلقائياً بين الراوترات."},
+{s:"mcq",en:"Which routing method can automatically adapt to topology changes?",ar:"أي طريقة توجيه تتكيف تلقائياً مع تغيرات الطوبولوجيا؟",o:["Static routing","Dynamic routing","Direct connection only","Manual addressing"],oa:["التوجيه الثابت (Static)","التوجيه الديناميكي (Dynamic)","الاتصال المباشر فقط","العنونة اليدوية"],a:1,e:"التوجيه الديناميكي هو اللي بيتكيف تلقائياً مع أي تغيير في الشبكة."},
+{s:"mcq",en:"Which is a common use of static routing?",ar:"ما الاستخدام الشائع للتوجيه الثابت؟",o:["Explicitly defining a path to a specific network","Automatically discovering every new network","Continuously exchanging routing tables","Automatically adapting to every topology change"],oa:["تحديد مسار صريح لشبكة معينة","اكتشاف كل شبكة جديدة تلقائياً","تبادل جداول التوجيه باستمرار","التكيف تلقائياً مع كل تغيير في الطوبولوجيا"],a:0,e:"التوجيه الثابت بيُستخدم لتحديد مسار واضح لشبكة معينة."},
+{s:"mcq",en:"Which routing approach is generally more scalable for networks with many routers?",ar:"أي طريقة توجيه تكون أفضل في التوسع للشبكات التي فيها راوترات كتير؟",o:["Static routing","Dynamic routing","Direct connection only","No routing"],oa:["التوجيه الثابت","التوجيه الديناميكي","الاتصال المباشر فقط","بدون توجيه"],a:1,e:"التوجيه الديناميكي أنسب للشبكات الكبيرة لأنه بيقلل الإدارة اليدوية."},
+{s:"mcq",en:"Which resources can dynamic routing protocols use?",ar:"أي موارد يمكن أن تستهلكها بروتوكولات التوجيه الديناميكي؟",o:["No CPU or memory","CPU, memory, and link bandwidth","Disk space only","Printer resources only"],oa:["لا تستخدم معالج أو ذاكرة","المعالج والذاكرة وعرض نطاق الروابط","مساحة القرص فقط","موارد الطابعة فقط"],a:1,e:"بروتوكولات التوجيه الديناميكي بتستهلك المعالج والذاكرة وعرض نطاق الروابط."},
+{s:"mcq",en:"Which protocol is classified as a link-state protocol in the lecture?",ar:"أي بروتوكول مصنف كـ Link-state في المحاضرة؟",o:["RIPv2","OSPFv2","BGP-4","RIPng"],oa:["RIPv2","OSPFv2","BGP-4","RIPng"],a:1,e:"OSPFv2 هو بروتوكول Link-state."},
+{s:"mcq",en:"Which protocol is listed as an exterior gateway protocol in the lecture?",ar:"أي بروتوكول مدرج كـ Exterior Gateway Protocol في المحاضرة؟",o:["OSPFv2","RIPv2","BGP-4","IS-IS"],oa:["OSPFv2","RIPv2","BGP-4","IS-IS"],a:2,e:"BGP-4 هو بروتوكول Exterior Gateway (EGP)."},
+{s:"mcq",en:"How do dynamic routing protocols learn about remote networks?",ar:"كيف تتعلم بروتوكولات التوجيه الديناميكي عن الشبكات البعيدة؟",o:["Routers exchange routing information with neighboring routers","Routers rename their interfaces","Routers delete their routing tables","Routers use text editors"],oa:["الراوترات تتبادل معلومات التوجيه مع الراوترات المجاورة","الراوترات تعيد تسمية واجهاتها","الراوترات تحذف جداول التوجيه","الراوترات تستخدم محررات النصوص"],a:0,e:"الراوترات بتتبادل معلومات التوجيه مع الجيران (Neighbors) عشان تتعلم عن الشبكات البعيدة."},
+{s:"mcq",en:"What is the main purpose of the routing table?",ar:"ما الغرض الأساسي من جدول التوجيه؟",o:["To store routes to known networks","To assign IP addresses","To encrypt packets","To connect physical cables"],oa:["تخزين المسارات للشبكات المعروفة","تعيين عناوين IP","تشفير الحزم","توصيل الكابلات الفيزيائية"],a:0,e:"جدول التوجيه بيخزن المسارات للشبكات اللي الراوتر يعرفها."},
+{s:"mcq",en:"Which symbol represents a directly connected network?",ar:"أي رمز يدل على شبكة متصلة مباشرة؟",o:["L","C","S","O"],oa:["L","C","S","O"],a:1,e:"الرمز C يدل على الشبكة المتصلة مباشرة."},
+{s:"mcq",en:"What does the letter L represent in the routing table?",ar:"ماذا يمثل الحرف L في جدول التوجيه؟",o:["Local route","Static route","OSPF route","Default route"],oa:["مسار محلي (Local)","مسار ثابت (Static)","مسار OSPF","المسار الافتراضي"],a:0,e:"L يعني Local route، أي عنوان الواجهة نفسها."},
+{s:"mcq",en:"What does the letter S represent?",ar:"ماذا يمثل الحرف S؟",o:["Dynamic route","Connected route","Static route","Local route"],oa:["مسار ديناميكي","مسار متصل","مسار ثابت (Static)","مسار محلي"],a:2,e:"S يعني Static route."},
+{s:"mcq",en:"What does the letter O represent?",ar:"ماذا يمثل الحرف O؟",o:["RIP route","OSPF route","Static route","Local route"],oa:["مسار RIP","مسار OSPF","مسار ثابت","مسار محلي"],a:1,e:"O يعني OSPF route."},
+{s:"mcq",en:"In [120/2], what does 120 represent?",ar:"في [120/2]، ماذا يمثل الرقم 120؟",o:["Metric","Next hop","Administrative Distance","Prefix length"],oa:["الـ Metric","الـ Next hop","Administrative Distance","طول الـ prefix"],a:2,e:"الرقم الأول في [AD/Metric] هو الـ Administrative Distance."},
+{s:"mcq",en:"In [120/2], what does 2 represent?",ar:"في [120/2]، ماذا يمثل الرقم 2؟",o:["Metric","Administrative Distance","Interface number","Network address"],oa:["الـ Metric","Administrative Distance","رقم الواجهة","عنوان الشبكة"],a:0,e:"الرقم الثاني هو الـ Metric."},
+{s:"mcq",en:"What does the next-hop address identify?",ar:"ماذا يحدد عنوان الـ Next-hop؟",o:["The final destination host","The next router to forward the packet to","The source computer","The subnet mask"],oa:["الجهاز النهائي للوجهة","الراوتر التالي الذي ستُرسل إليه الحزمة","الجهاز المصدر","Subnet mask"],a:1,e:"الـ next-hop هو الراوتر اللي الحزمة هتتبعت له."},
+{s:"mcq",en:"What does the route timestamp indicate?",ar:"ماذا يوضح الـ Route Timestamp؟",o:["The route age since it was learned or updated","The packet size","The router uptime","The network speed"],oa:["عمر المسار منذ تعلمه أو تحديثه","حجم الحزمة","مدة تشغيل الراوتر","سرعة الشبكة"],a:0,e:"الـ timestamp بيوضح من إمتى المسار اتعلم أو اتحدث."},
+{s:"mcq",en:"What does an indented route entry represent in the classful routing table display?",ar:"ماذا يمثل سطر المسار المُزاح (Indented) في عرض الجدول الـ classful؟",o:["Parent route","Child route","Default route","Static route"],oa:["مسار أب (Parent)","مسار تابع (Child)","مسار افتراضي","مسار ثابت"],a:1,e:"المسار المُزاح هو Child route تابع لـ parent route."},
+{s:"mcq",en:"What must be configured for a directly connected route to appear?",ar:"ما الذي يجب إعداده حتى يظهر المسار المتصل مباشرة؟",o:["An active interface with an IP address and subnet mask","A dynamic routing protocol only","A default route","An external gateway only"],oa:["واجهة فعالة بعنوان IP وsubnet mask","بروتوكول توجيه ديناميكي فقط","مسار افتراضي","بوابة خارجية فقط"],a:0,e:"لازم الواجهة تكون فعالة ومعاها IP وSubnet mask."},
+{s:"mcq",en:"What is the prefix length of an IPv4 local route?",ar:"ما طول الـ prefix لمسار Local في IPv4؟",o:["/24","/16","/32","/128"],oa:["/24","/16","/32","/128"],a:2,e:"الطول هو /32."},
+{s:"mcq",en:"What is the IPv4 default route?",ar:"ما هو الـ default route في IPv4؟",o:["192.168.1.0/24","0.0.0.0/0","255.255.255.255/32","127.0.0.1/8"],oa:["192.168.1.0/24","0.0.0.0/0","255.255.255.255/32","127.0.0.1/8"],a:1,e:"الـ default route في IPv4 هو 0.0.0.0/0."},
+{s:"mcq",en:"When does a router use the default route?",ar:"متى يستخدم الراوتر الـ default route؟",o:["When a specific matching route exists","When no more specific matching route exists","For every directly connected network","Only for local traffic"],oa:["عندما يوجد مسار محدد يطابق","عندما لا يوجد مسار أكثر تحديداً يطابق","لكل شبكة متصلة مباشرة","فقط لحركة المرور المحلية"],a:1,e:"الـ default route بيُستخدم لما مفيش مسار أكثر تحديداً يطابق الوجهة."},
+{s:"mcq",en:"How are static routes configured?",ar:"كيف يتم إعداد المسارات الثابتة؟",o:["Automatically by RIP","Automatically by OSPF","Manually by the network administrator","Automatically by DHCP"],oa:["تلقائياً بواسطة RIP","تلقائياً بواسطة OSPF","يدوياً بواسطة مسؤول الشبكة","تلقائياً بواسطة DHCP"],a:2,e:"المسارات الثابتة بتتضاف يدوياً بواسطة مسؤول الشبكة."},
+{s:"mcq",en:"What happens to static routes when the network topology changes?",ar:"ماذا يحدث للمسارات الثابتة عند تغير طوبولوجيا الشبكة؟",o:["They always update automatically","They must be manually reconfigured","They change into dynamic routes","They are deleted automatically"],oa:["تتحدث تلقائياً دائماً","يجب إعادة ضبطها يدوياً","تتحول إلى مسارات ديناميكية","تُحذف تلقائياً"],a:1,e:"المسارات الثابتة لازم تتعدل يدوياً."},
+{s:"mcq",en:"Which routing type is suitable for networks with many routers?",ar:"أي نوع توجيه مناسب للشبكات التي فيها راوترات كتير؟",o:["Static routing","Dynamic routing","Local routing","Default routing only"],oa:["التوجيه الثابت","التوجيه الديناميكي","التوجيه المحلي","التوجيه الافتراضي فقط"],a:1,e:"التوجيه الديناميكي أنسب للشبكات الكبيرة."},
+{s:"mcq",en:"Which protocol is a Distance Vector protocol?",ar:"أي بروتوكول من نوع Distance Vector؟",o:["OSPFv2","BGP-4","RIPv2","OSPFv3"],oa:["OSPFv2","BGP-4","RIPv2","OSPFv3"],a:2,e:"RIPv2 بروتوكول Distance Vector. OSPF من نوع Link-state، وBGP من نوع Path Vector."},
+{s:"mcq",en:"Which protocol is a Path Vector protocol?",ar:"أي بروتوكول من نوع Path Vector؟",o:["EIGRP","BGP-4","RIPv2","OSPFv2"],oa:["EIGRP","BGP-4","RIPv2","OSPFv2"],a:1,e:"BGP-4 هو بروتوكول Path Vector."},
+{s:"mcq",en:"Which protocol is used for OSPF with IPv6?",ar:"أي بروتوكول يُستخدم لـ OSPF مع IPv6؟",o:["OSPFv2","RIPv2","OSPFv3","BGP-4"],oa:["OSPFv2","RIPv2","OSPFv3","BGP-4"],a:2,e:"OSPFv3 هو الإصدار اللي بيدعم IPv6."}
+];
+
+const TP1B=[A_BASIC,A_BASIC,A_BASIC,A_BASIC,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_MEDIA,A_SERV,A_SERV,A_ADDR,A_ADDR,A_ADDR,A_ADDR,A_ADDR,A_BASIC,A_BASIC,A_ADDR,A_ADDR,A_SERV,A_SERV,A_SERV,A_MODEL,A_MODEL,A_MODEL,A_PROTO,A_MODEL];
+
+const QS1B = [
+{s:"mcq",en:"Which statement best defines a computer network?",ar:"أي عبارة تعرّف شبكة الحاسب بشكل أدق؟",o:["A system connecting computing devices to communicate and share resources","A single computer operating without peripherals","A program used only to create documents","A storage device used to back up files"],oa:["نظام يربط أجهزة الحوسبة للتواصل ومشاركة الموارد","كمبيوتر واحد يعمل بدون ملحقات","برنامج يُستخدم فقط لإنشاء المستندات","جهاز تخزين يُستخدم لعمل نسخ احتياطية"],a:0,e:"شبكة الحاسب نظام بيربط أجهزة الحوسبة ببعض عشان تتواصل وتشارك الموارد."},
+{s:"mcq",en:"Which of the following is an example of a network node?",ar:"أي مما يلي مثال على الـ Node في الشبكة؟",o:["A computer or router connected to the network","Only a copper cable","Only a communication protocol","A wall outlet without a network interface"],oa:["كمبيوتر أو راوتر متصل بالشبكة","كابل نحاسي فقط","بروتوكول اتصال فقط","مقبس حائط بدون واجهة شبكة"],a:0,e:"الـ Node أي جهاز متصل بالشبكة ويقدر يرسل أو يستقبل بيانات، زي الكمبيوتر أو الراوتر."},
+{s:"mcq",en:"Which component provides the pathway for data to travel?",ar:"أي مكون يوفر المسار اللي تنتقل فيه البيانات؟",o:["Transmission media","Operating system","Application software","Power supply"],oa:["وسائط النقل","نظام التشغيل","برامج التطبيقات","مصدر الكهرباء"],a:0,e:"وسائط النقل (Transmission media) هي المسار الفيزيائي اللي البيانات بتعديه بين الأجهزة."},
+{s:"mcq",en:"What is the primary role of network protocols?",ar:"ما الدور الأساسي لبروتوكولات الشبكة؟",o:["To define rules for formatting, transmitting, and receiving data","To increase cable length physically","To replace all network devices","To assign a color to each cable"],oa:["تحديد قواعد تنسيق البيانات وإرسالها واستقبالها","زيادة طول الكابل فعلياً","استبدال كل أجهزة الشبكة","إعطاء لون لكل كابل"],a:0,e:"البروتوكولات مجموعة قواعد بتحدد إزاي البيانات تتنسق وتتبعت وتتستقبل بين الأجهزة."},
+{s:"mcq",en:"Which medium transmits data using pulses of light?",ar:"أي وسيط ينقل البيانات بنبضات ضوئية؟",o:["Fiber-optic cable","Copper cable","Coaxial cable","Wireless radio only"],oa:["الكابل الضوئي (Fiber-optic)","الكابل النحاسي","الكابل المحوري","الراديو اللاسلكي فقط"],a:0,e:"الكابل الضوئي بينقل البيانات بنبضات ضوء داخل ألياف زجاجية."},
+{s:"mcq",en:"Which medium carries data using electrical impulses?",ar:"أي وسيط ينقل البيانات بنبضات كهربية؟",o:["Metal wires in cables","Glass fibers","Plastic optical fibers","Infrared light only"],oa:["أسلاك معدنية داخل الكابلات","ألياف زجاجية","ألياف بصرية بلاستيكية","الأشعة تحت الحمراء فقط"],a:0,e:"الأسلاك المعدنية (النحاس) بتنقل البيانات بإشارات كهربية."},
+{s:"mcq",en:"Which cable type is commonly terminated with RJ-45 connectors and used in Ethernet LANs?",ar:"أي نوع كابل يُنهى غالباً بكونيكتور RJ-45 ويُستخدم في شبكات Ethernet المحلية؟",o:["Unshielded twisted pair (UTP)","Fiber-optic cable","Coaxial antenna cable","Power cable"],oa:["الكابل المزدوج الملتوي غير المحمي (UTP)","الكابل الضوئي","كابل الهوائي المحوري","كابل الكهرباء"],a:0,e:"كابل UTP هو اللي بيتركب عليه RJ-45 ويُستخدم في شبكات Ethernet المحلية."},
+{s:"mcq",en:"What is the purpose of twisting pairs of wires in UTP cable?",ar:"ما الغرض من لف أزواج الأسلاك في كابل UTP؟",o:["To help protect the signal from interference","To convert IP addresses into MAC addresses","To provide optical transmission","To increase the number of network layers"],oa:["المساعدة في حماية الإشارة من التداخل","تحويل عناوين IP إلى عناوين MAC","توفير النقل الضوئي","زيادة عدد طبقات الشبكة"],a:0,e:"اللف بيقلل التداخل الكهرومغناطيسي على الإشارة."},
+{s:"mcq",en:"Compared with UTP, what is a characteristic of STP cable?",ar:"مقارنة بـ UTP، ما الخاصية المميزة لكابل STP؟",o:["It offers better noise protection but is more expensive and harder to install","It uses no shielding and is always cheaper","It transmits data only through light","It does not use RJ-45 connectors"],oa:["يوفر حماية أفضل من التشويش لكنه أغلى وأصعب في التركيب","لا يستخدم حماية وهو دائماً أرخص","ينقل البيانات بالضوء فقط","لا يستخدم كونيكتور RJ-45"],a:0,e:"STP فيه طبقة حماية (Shielding) بتقلل التشويش، لكنه أغلى وأصعب في التركيب من UTP."},
+{s:"mcq",en:"Which cable wiring arrangement is used for a straight-through Ethernet cable?",ar:"أي ترتيب توصيل يُستخدم لكابل Ethernet من نوع Straight-through؟",o:["The same standard, T568A or T568B, at both ends","T568A at one end and T568B at the other","No standardized wiring at either end","One end has no connector"],oa:["نفس المعيار T568A أو T568B في الطرفين","T568A في طرف وT568B في الطرف الآخر","بدون توصيل معياري في أي طرف","طرف واحد بدون كونيكتور"],a:0,e:"كابل Straight-through بيستخدم نفس المعيار في الطرفين."},
+{s:"mcq",en:"Which cable is traditionally used to connect two switches directly?",ar:"أي كابل يُستخدم تقليدياً لتوصيل سويتشين ببعض مباشرة؟",o:["Crossover cable","Straight-through cable","Fiber patch cable only","Console cable"],oa:["كابل Crossover","كابل Straight-through","كابل Fiber patch فقط","كابل Console"],a:0,e:"السويتشات تقليدياً بتتوصل ببعض بكابل Crossover، أما Straight-through فبيتوصل بين أجهزة مختلفة في النوع زي الكمبيوتر والسويتش."},
+{s:"mcq",en:"What does ARP help a host discover?",ar:"ماذا يساعد ARP الجهاز على اكتشافه؟",o:["The MAC address associated with a known IPv4 address","The domain name associated with a MAC address","The subnet mask from a website name","The public IP address of a DNS server"],oa:["عنوان MAC المرتبط بعنوان IPv4 معروف","اسم الدومين المرتبط بعنوان MAC","الـ subnet mask من اسم موقع","عنوان IP العام لخادم DNS"],a:0,e:"ARP بيكتشف عنوان MAC المرتبط بعنوان IPv4 معروف داخل الشبكة المحلية."},
+{s:"mcq",en:"What does DNS resolve in the example discussed in the lecture?",ar:"ماذا يحوّل DNS في المثال المذكور في المحاضرة؟",o:["A domain name to an IP address","An IP address to a MAC address","A MAC address to a switch port number","A subnet mask to a cable type"],oa:["اسم الدومين إلى عنوان IP","عنوان IP إلى عنوان MAC","عنوان MAC إلى رقم منفذ السويتش","Subnet mask إلى نوع كابل"],a:0,e:"DNS بيحوّل اسم الدومين لعنوان IP."},
+{s:"mcq",en:"Which type of address is an IPv4 address?",ar:"أي نوع من العناوين هو عنوان IPv4؟",o:["A logical address","A hardware address","A physical cable identifier","A protocol name"],oa:["عنوان منطقي (Logical)","عنوان مادي (Hardware)","معرّف للكابل الفيزيائي","اسم بروتوكول"],a:0,e:"عنوان IPv4 عنوان منطقي (Logical) بيتعين بالبرمجة وليس مرتبطاً بالجهاز نفسه."},
+{s:"mcq",en:"How long is an IPv4 address?",ar:"كم طول عنوان IPv4؟",o:["32 bits","48 bits","64 bits","128 bits"],oa:["32 بت","48 بت","64 بت","128 بت"],a:0,e:"عنوان IPv4 طوله 32 بت."},
+{s:"mcq",en:"How long is an IPv6 address?",ar:"كم طول عنوان IPv6؟",o:["128 bits","32 bits","48 bits","16 bits"],oa:["128 بت","32 بت","48 بت","16 بت"],a:0,e:"عنوان IPv6 طوله 128 بت."},
+{s:"mcq",en:"What is a MAC address?",ar:"ما هو عنوان MAC؟",o:["A hardware address associated with a network interface","A logical address assigned only by DNS","A name used to identify a website","A routing protocol"],oa:["عنوان مادي مرتبط بواجهة الشبكة","عنوان منطقي يعينه DNS فقط","اسم يُستخدم لتعريف موقع","بروتوكول توجيه"],a:0,e:"عنوان MAC عنوان مادي (Hardware) مرتبط بكرت الشبكة نفسه."},
+{s:"mcq",en:"How long is a standard MAC address?",ar:"كم طول عنوان MAC القياسي؟",o:["48 bits","32 bits","64 bits","128 bits"],oa:["48 بت","32 بت","64 بت","128 بت"],a:0,e:"عنوان MAC القياسي طوله 48 بت."},
+{s:"mcq",en:"Which command can be used to display IP configuration on Windows, as noted in the lecture?",ar:"أي أمر يُستخدم لعرض إعدادات IP على Windows، حسب المحاضرة؟",o:["ipconfig","tracert","nslookup","netstat"],oa:["ipconfig","tracert","nslookup","netstat"],a:0,e:"أمر ipconfig بيعرض إعدادات IP للجهاز على Windows."},
+{s:"mcq",en:"What is the purpose of pinging 127.0.0.1?",ar:"ما الغرض من عمل ping لـ 127.0.0.1؟",o:["To test the local TCP/IP stack","To discover a remote website's MAC address","To assign an IP address through DHCP","To translate a private address to a public address"],oa:["لاختبار مكدس TCP/IP المحلي على الجهاز","لاكتشاف عنوان MAC لموقع بعيد","لتعيين عنوان IP عن طريق DHCP","لترجمة عنوان خاص إلى عام"],a:0,e:"127.0.0.1 عنوان Loopback، وعمل ping له بيختبر إن TCP/IP شغال على الجهاز نفسه."},
+{s:"mcq",en:"In the example 192.168.1.0/24, what does 192.168.1.0 represent?",ar:"في المثال 192.168.1.0/24، ماذا يمثل 192.168.1.0؟",o:["The network address","The broadcast address","A public DNS address","The default gateway in every network"],oa:["عنوان الشبكة","عنوان الـ Broadcast","عنوان DNS عام","الـ default gateway في كل شبكة"],a:0,e:"أول عنوان في الشبكة هو عنوان الشبكة نفسها (Network address)."},
+{s:"mcq",en:"What is the broadcast address in the example 192.168.1.0/24?",ar:"ما عنوان الـ Broadcast في المثال 192.168.1.0/24؟",o:["192.168.1.255","192.168.1.0","192.168.0.1","192.168.1.1"],oa:["192.168.1.255","192.168.1.0","192.168.0.1","192.168.1.1"],a:0,e:"آخر عنوان في الشبكة 192.168.1.255، وده عنوان الـ Broadcast."},
+{s:"mcq",en:"What is the main role of DHCP?",ar:"ما الدور الأساسي لـ DHCP؟",o:["To automatically assign IP addresses and network settings to devices","To translate domain names into IP addresses","To encrypt Ethernet frames","To select the best routing path"],oa:["تعيين عناوين IP وإعدادات الشبكة للأجهزة تلقائياً","تحويل أسماء الدومينات إلى عناوين IP","تشفير إطارات Ethernet","اختيار أفضل مسار توجيه"],a:0,e:"DHCP بيوزع عناوين IP وإعدادات الشبكة تلقائياً على الأجهزة."},
+{s:"mcq",en:"What does NAT do in the context described in the lecture?",ar:"ماذا يفعل NAT حسب السياق المذكور في المحاضرة؟",o:["Translates between private and public IP addresses","Converts domain names into MAC addresses","Assigns MAC addresses to network cards","Detects errors in physical cables"],oa:["يترجم بين عناوين IP الخاصة والعامة","يحوّل أسماء الدومينات إلى عناوين MAC","يعين عناوين MAC لكروت الشبكة","يكتشف أخطاء في الكابلات الفيزيائية"],a:0,e:"NAT بيترجم بين عناوين IP الخاصة (Private) والعامة (Public)."},
+{s:"mcq",en:"What is APIPA used for?",ar:"ما الغرض من APIPA؟",o:["To let a device assign itself a temporary IP address when a DHCP server is unreachable","To assign public IP addresses to all devices","To replace DNS on the Internet","To configure a router's routing table"],oa:["تسمح للجهاز يعين لنفسه عنوان IP مؤقت لما خادم DHCP يكون غير متاح","تعيين عناوين IP عامة لكل الأجهزة","استبدال DNS على الإنترنت","ضبط جدول التوجيه في الراوتر"],a:0,e:"APIPA بيسمح للجهاز يعين لنفسه عنوان من نطاق 169.254 لما DHCP ما يردش."},
+{s:"mcq",en:"Which TCP/IP model layer determines the best path through a network?",ar:"أي طبقة في نموذج TCP/IP تحدد أفضل مسار عبر الشبكة؟",o:["Internet","Application","Transport","Network Access"],oa:["طبقة الإنترنت (Internet)","طبقة التطبيقات (Application)","طبقة النقل (Transport)","طبقة الوصول للشبكة (Network Access)"],a:0,e:"طبقة Internet هي اللي بتحدد المسار (Routing) عبر الشبكات."},
+{s:"mcq",en:"Which OSI layer is responsible for routing and logical addressing?",ar:"أي طبقة في OSI مسؤولة عن التوجيه والعنونة المنطقية؟",o:["Network (Layer 3)","Data Link (Layer 2)","Physical (Layer 1)","Presentation (Layer 6)"],oa:["طبقة الشبكة (Layer 3)","طبقة ربط البيانات (Layer 2)","الطبقة الفيزيائية (Layer 1)","طبقة العرض (Layer 6)"],a:0,e:"طبقة Network (3) مسؤولة عن العنونة المنطقية (IP) والتوجيه."},
+{s:"mcq",en:"At which OSI layer are data frames handled for node-to-node transfer?",ar:"في أي طبقة في OSI تتعامل الـ Frames مع النقل بين العقد المتجاورة؟",o:["Data Link (Layer 2)","Transport (Layer 4)","Session (Layer 5)","Application (Layer 7)"],oa:["ربط البيانات (Layer 2)","النقل (Layer 4)","الجلسة (Layer 5)","التطبيقات (Layer 7)"],a:0,e:"طبقة Data Link (2) بتتعامل مع الـ Frames وبتنقل البيانات بين العقد المتجاورة."},
+{s:"mcq",en:"Which transport protocol is described as providing reliable communication?",ar:"أي بروتوكول نقل موصوف بأنه يوفر اتصالاً موثوقاً؟",o:["TCP","UDP","ARP","ICMP"],oa:["TCP","UDP","ARP","ICMP"],a:0,e:"TCP بيضمن وصول البيانات كاملة وبالترتيب الصحيح، وده معنى الموثوقية."},
+{s:"mcq",en:"Which OSI layer handles data formatting, compression, and encryption/decryption according to the lecture?",ar:"أي طبقة في OSI تتعامل مع تنسيق البيانات وضغطها وتشفيرها وفك تشفيرها حسب المحاضرة؟",o:["Presentation (Layer 6)","Session (Layer 5)","Network (Layer 3)","Physical (Layer 1)"],oa:["طبقة العرض (Layer 6)","الجلسة (Layer 5)","الشبكة (Layer 3)","الفيزيائية (Layer 1)"],a:0,e:"طبقة Presentation (6) مسؤولة عن تنسيق البيانات والتشفير والضغط."}
+];
+
+const TP_TF=[R_BASIC,A_ADDR,A_MODEL,R_PREF,R_PREF,R_PREF,R_PREF,R_PREF];
+
+const QS_TF = [
+{s:"tf",en:"A routing table is very important for a switch.",ar:"جدول التوجيه مهم جداً للسويتش.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. جدول التوجيه بيتستخدم في الراوتر، أما السويتش فبيعتمد على جدول عناوين MAC."},
+{s:"tf",en:"A MAC address is unique and is used by a switch.",ar:"عنوان MAC فريد ويستخدمه السويتش.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. عنوان MAC فريد لكل كرت شبكة، والسويتش بيستخدمه عشان يحدد المنفذ اللي يبعت عليه."},
+{s:"tf",en:"A router works at Layer 2 (Data Link layer).",ar:"الراوتر يعمل في الطبقة الثانية (Data Link).",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. الراوتر بيعمل في الطبقة الثالثة (Network layer)، والطبقة الثانية شغل السويتش."},
+{s:"tf",en:"Administrative Distance represents the priority of routing sources.",ar:"Administrative Distance تمثل أولوية مصادر التوجيه.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. الـ AD بتحدد أولوية مصدر المسار، والقيمة الأقل تعني أولوية أعلى."},
+{s:"tf",en:"Using cost to determine the best path is done by load balancing.",ar:"استخدام الـ Cost لتحديد أفضل مسار يتم بواسطة توزيع الحمل (Load balancing).",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. تحديد أفضل مسار بالـ Cost عملية Path determination، أما توزيع الحمل فهو شيء مختلف بيحصل لما تتساوى المسارات."},
+{s:"tf",en:"Metric is different depending on the routing protocol used.",ar:"الـ Metric بيختلف حسب بروتوكول التوجيه المستخدم.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. RIP بيستخدم Hop Count، وOSPF بيستخدم Cost، وEIGRP بيستخدم Bandwidth وDelay."},
+{s:"tf",en:"The minimum bandwidth is the best path.",ar:"أقل عرض نطاق هو أفضل مسار.",o:["True","False"],oa:["صح","غلط"],a:1,e:"غلط. المسار الأفضل هو اللي له أقل metric، ومش شرط إنه يكون أقل عرض نطاق. في EIGRP مثلاً الـ bandwidth بيتحسب كأقل عرض نطاق على طول المسار، وده مش معناه إن الأقل هو الأفضل."},
+{s:"tf",en:"Equal metric values with different protocols require using AD.",ar:"تساوي قيم الـ metric مع اختلاف البروتوكولات يستلزم استخدام الـ AD.",o:["True","False"],oa:["صح","غلط"],a:0,e:"صح. الـ metric ما ينفعش يتقارن بين بروتوكولات مختلفة، فالـ AD هي اللي بتحدد المسار المفضل."}
+];
+
+const LECTURES = [
+  {t:"المحاضرة الأولى: أساسيات شبكات الحاسب", en:"Lecture 1: Networking Fundamentals", qs:QS1,tp:TP1},
+  {t:"المحاضرة الثالثة: مقدمة في التوجيه (Routing)", en:"Lecture 3: Introduction to Routing", qs:QS3,tp:TP3},
+  {t:"المحاضرة الرابعة: جداول التوجيه والتوجيه الديناميكي", en:"Lecture 4: Routing Tables and Dynamic Routing", qs:QS4,tp:TP4},
+  {t:"المحاضرة الأولى (مراجعة - مجموعة ثانية)", en:"Lecture 1 (Review Set)", qs:QS1B,tp:TP1B},
+  {t:"محاضرة صح أو غلط", en:"True or False Lecture", qs:QS_TF,tp:TP_TF}
+];
+
+let L=null, cur=0, ans=[], lang="en";
+const app=document.getElementById("app");
+const SEC={mcq:"اختيار من متعدد",tf:"صح أو غلط",fill:"أكمل الجملة"};
+
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+
+function home(){
+  app.innerHTML=`
+    <div class="top"><div class="logo">StudyBank</div></div>
+    <h2 style="margin-top:30px">اختر المحاضرة</h2>
+    ${LECTURES.map((l,i)=>`
+      <div class="lec" onclick="start(${i})">
+        <h3>${l.t}</h3>
+        <p>${l.en} · ${l.qs.length} سؤال</p>
+      </div>`).join("")}
+  `;
+}
+
+function start(i){L=LECTURES[i];cur=0;ans=[];lang="en";render();}
+
+function render(){
+  const q=L.qs[cur], a=ans[cur], done=!!a, total=L.qs.length;
+  const answered=ans.filter(Boolean).length;
+  const stem = lang==="ar"? q.ar : q.en;
+  const dir = lang==="ar"? "rtl":"ltr";
+  let body="";
+  if(q.s==="fill"){
+    body=`<div class="fillbox">
+      <input id="fi" class="fill" ${done?"disabled":""} value="${done?esc(a.val):""}" placeholder="${lang==="ar"?"اكتب الإجابة بالإنجليزية":"Type your answer"}" dir="ltr"
+        onkeydown="if(event.key==='Enter')checkFill()">
+      <button class="btn" ${done?"disabled":""} onclick="checkFill()">تحقق</button>
+    </div>`;
+  } else {
+    const opts = lang==="ar"? q.oa : q.o;
+    body=`<div class="opts">`+opts.map((t,i)=>{
+      let c="opt";
+      if(done){ if(i===q.a) c+=" right"; else if(a.val===i) c+=" wrong"; }
+      else if(a && a.val===i) c+=" sel";
+      return `<button class="${c}" ${done?"disabled":""} onclick="pick(${i})"><span class="dot"></span><span>${t}</span></button>`;
+    }).join("")+`</div>`;
+  }
+  let fb="";
+  if(done){
+    if(a.ok) fb=`<div class="fb ok">✓ إجابة صحيحة</div>`;
+    else {
+      const correct = q.s==="fill"? q.show : (lang==="ar"? q.oa[q.a] : q.o[q.a]);
+      fb=`<div class="fb bad"><b>✗ إجابة غير صحيحة.</b><br>الإجابة الصحيحة: <b dir="ltr">${correct}</b><br>${q.e}</div>`;
+    }
+  }
+  app.innerHTML=`
+    <div class="top">
+      <button class="prev" ${cur===0?"disabled":""} onclick="prev()">← PREVIOUS</button>
+      <div class="logo">StudyBank</div>
+    </div>
+    <div class="bar"><div style="width:${answered/total*100}%"></div></div>
+    <div class="meta">QUESTION ${cur+1} / ${total}</div>
+    <div class="sec">${SEC[q.s]}</div>
+    <h2 dir="${dir}">${stem}</h2>
+    ${body}
+    ${fb}
+    <div class="foot">
+      <button class="btn ghost" onclick="toggleLang()">${lang==="en"?"ترجمة للعربية":"Show English"}</button>
+      <button class="btn" ${done?"":"disabled"} onclick="next()">${cur===total-1?"عرض النتيجة":"السؤال التالي →"}</button>
+    </div>`;
+}
+
+function pick(i){
+  if(ans[cur])return;
+  ans[cur]={val:i, ok:i===L.qs[cur].a};
+  render();
+}
+function checkFill(){
+  if(ans[cur])return;
+  const v=document.getElementById("fi").value.trim();
+  if(!v)return;
+  ans[cur]={val:v, ok:L.qs[cur].a.includes(v.toLowerCase())};
+  render();
+}
+function next(){
+  if(!ans[cur])return;
+  if(cur<L.qs.length-1){cur++;render();} else showResult();
+}
+function prev(){ if(cur>0){cur--;render();} }
+function toggleLang(){ lang=lang==="en"?"ar":"en"; render(); }
+
+function showResult(){
+  const score=ans.filter(x=>x&&x.ok).length, total=L.qs.length;
+  const pct=Math.round(score/total*100);
+  const topics={};
+  L.qs.forEach((q,i)=>{
+    const t=L.tp[i];
+    if(!topics[t]) topics[t]={c:0,n:0};
+    topics[t].n++;
+    if(ans[i]&&ans[i].ok) topics[t].c++;
+  });
+  const list=Object.keys(topics).map(t=>({t,c:topics[t].c,n:topics[t].n,p:Math.round(topics[t].c/topics[t].n*100)})).sort((a,b)=>b.p-a.p);
+  const strong=list.filter(x=>x.p>=80);
+  const focus=list.filter(x=>x.p<80).sort((a,b)=>a.p-b.p).slice(0,3);
+  const bars=list.map(x=>`
+    <div class="tpl"><span>${x.t}</span><span>${x.c}/${x.n} · ${x.p}%</span></div>
+    <div class="tpb"><div style="width:${x.p}%;background:${x.p>=80?"#2BA84A":x.p>=60?"#F5B800":"#E5484D"}"></div></div>`).join("");
+  const strongHtml = strong.length
+    ? strong.map(x=>`<li>${x.t} (${x.p}%)</li>`).join("")
+    : "<li>مفيش موضوع وصل لـ 80% لسه، ركز على المراجعة.</li>";
+  const focusHtml = focus.length
+    ? focus.map(x=>`<li><b>${x.t}</b> (${x.p}%): راجع شرح الأسئلة الغلط في الموضوع ده وحلها تاني.</li>`).join("")
+    : "<li>ممتاز! مفيش موضوع محتاج تركيز.</li>";
+  app.innerHTML=`
+    <div class="top"><div class="logo">StudyBank</div></div>
+    <div class="score">
+      <p style="color:#7d8394">نتيجتك في ${L.t}</p>
+      <div class="big">${score} / ${total}</div>
+      <p>${pct}%</p>
+    </div>
+    <div class="box"><h4>أداؤك حسب الموضوع</h4>${bars}</div>
+    <div class="box"><h4>✓ نقاط القوة</h4><ul>${strongHtml}</ul></div>
+    <div class="box"><h4>🎯 محتاج تركيز عليها</h4><ul>${focusHtml}</ul></div>
+    <div class="foot">
+      <button class="btn" onclick="start(${LECTURES.indexOf(L)})">إعادة المحاضرة</button>
+      <button class="btn ghost" onclick="home()">كل المحاضرات</button>
+    </div>`;
+}
+
+home();
+</script>
+</body>
+</html>
