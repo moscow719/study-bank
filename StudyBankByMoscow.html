@@ -253,10 +253,9 @@ const QS_TF = [
 
 const LECTURES = [
   {t:"المحاضرة الأولى: أساسيات شبكات الحاسب", en:"Lecture 1: Networking Fundamentals", qs:QS1,tp:TP1},
-  {t:"المحاضرة الثالثة: مقدمة في التوجيه (Routing)", en:"Lecture 3: Introduction to Routing", qs:QS3,tp:TP3},
+  {t:"المحاضرة الثالثة: مقدمة في التوجيه (Routing)", en:"Lecture 3: Introduction to Routing", qs:QS3.concat(QS_TF),tp:TP3.concat(TP_TF)},
   {t:"المحاضرة الرابعة: جداول التوجيه والتوجيه الديناميكي", en:"Lecture 4: Routing Tables and Dynamic Routing", qs:QS4,tp:TP4},
-  {t:"المحاضرة الأولى (مراجعة - مجموعة ثانية)", en:"Lecture 1 (Review Set)", qs:QS1B,tp:TP1B},
-  {t:"محاضرة صح أو غلط", en:"True or False Lecture", qs:QS_TF,tp:TP_TF}
+  {t:"المحاضرة الأولى (مراجعة - مجموعة ثانية)", en:"Lecture 1 (Review Set)", qs:QS1B,tp:TP1B}
 ];
 
 let L=null, cur=0, ans=[], lang="en";
